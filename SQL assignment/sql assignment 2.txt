@@ -1,0 +1,166 @@
+create table db5.workpatterns1(
+employee_id varchar(255),
+age varchar(255),
+gender varchar(255),
+department varchar(255),
+job_role varchar(255),
+industry varchar(255),
+location varchar(255),
+company_size varchar(255), 
+tenure varchar(255),
+weekly_hours varchar(255),
+overtime_hours varchar(255),
+remote_days varchar(255),
+flexible_hours_policy varchar(255),
+meeting_hours varchar(255), 
+work_life_balance_score varchar(255), 
+stress_level varchar(255),
+productivity_score varchar(255),
+projects_completed varchar(255),
+salary_range varchar(255),
+time_period varchar(255)
+);
+
+load data infile "C:/ProgramData/MySQL/MySQL Server 8.0/Uploads/workpatterns.csv" 
+into table db5.workpatterns
+fields terminated by ","
+enclosed by '"'
+lines terminated by '\n'
+ignore 1 rows;
+
+/*select * from db5.workpatterns;*/
+
+create table db5.workpatterns_clean3(
+employee_id varchar(255),
+age int(3),
+gender varchar(255),
+department varchar(255),
+job_role varchar(255),
+industry varchar(255),
+location text(200),
+company_size varchar(255), 
+tenure float(10),
+weekly_hours float(10),
+overtime_hours float(10),
+remote_days int(10),
+flexible_hours_policy text(10),
+meeting_hours float(10), 
+work_life_balance_score float(10), 
+stress_level varchar(255),
+productivity_score varchar(255),
+projects_completed int(10),
+salary_range varchar(255),
+time_period date
+);
+
+insert into db5.workpatterns_clean3 
+select * from db5.workpatterns;
+
+select * from db5.workpatterns_clean3;
+
+# gender with more stress
+select gender,avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender order by average_stress_level desc; 
+
+# In each location which gender is more stressful
+
+#select * from db5.workpatterns_clean3;
+
+#select * from db5.workpatterns_clean3;
+
+# which industry causing more stress
+select industry, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by industry order by industry desc;
+
+# which location causing more stress in each location
+select location, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by location order by average_stress_level desc;
+
+# which gender has more stress
+select gender, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender order by average_stress_level desc;
+
+# which job role causing more stress
+select job_role, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by job_role order by average_stress_level desc;
+
+# which department role causing more stress
+
+select department, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by department order by average_stress_level desc;
+
+# location wise each gender has more stress level score
+select location, gender, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender, location order by average_stress_level desc;
+
+# In each location which gender has highest stress level
+with all_groups as(select location, gender, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender, location order by average_stress_level desc),
+ranked_group as (select *, rank() over(partition by location order by average_stress_level desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_stress_level desc;
+
+# in each location in each department which gender has high stress level
+with all_groups as(select location, gender,department, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender, location, department order by average_stress_level desc),
+ranked_group as (select *, rank() over(partition by location order by average_stress_level desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_stress_level desc;
+
+# in each location, in each industry which gender has high stress level
+with all_groups as(select location, gender,industry, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender, location, industry order by average_stress_level desc),
+ranked_group as (select *, rank() over(partition by location order by average_stress_level desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_stress_level desc;
+
+# in each location in each company_size which gender has high stress level
+with all_groups as(select location, gender,job_role, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender, location, job_role order by average_stress_level desc),
+ranked_group as (select *, rank() over(partition by location order by average_stress_level desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_stress_level desc;
+
+with all_groups as(select location, gender,company_size, avg(stress_level) as average_stress_level from db5.workpatterns_clean3 group by gender, location, company_size order by average_stress_level desc),
+ranked_group as (select *, rank() over(partition by location order by average_stress_level desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_stress_level desc;
+
+#select * from db5.workpatterns_clean3;
+
+select industry, avg(weekly_hours) as avg_weekly_hours,company_size from db5.workpatterns_clean3 group by industry, company_size order by avg_weekly_hours desc;
+
+with all_groups as(select industry, company_size, avg(weekly_hours) as average_weekly_hours from db5.workpatterns_clean3 group by industry, company_size order by average_weekly_hours desc),
+ranked_group as (select *, rank() over(partition by industry order by average_weekly_hours desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_weekly_hours desc;
+
+with all_groups as(select industry, company_size, avg(weekly_hours) as average_weekly_hours from db5.workpatterns_clean3 group by industry, company_size order by average_weekly_hours),
+ranked_group as (select *, rank() over(partition by industry order by average_weekly_hours) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by average_weekly_hours;
+
+with all_groups as(select location, gender, avg(work_life_balance_score) as avg_work_life_balance_score from db5.workpatterns_clean3 group by gender, location order by avg_work_life_balance_score desc),
+ranked_group as (select *, rank() over(partition by location order by avg_work_life_balance_score desc) as rnk from all_groups)
+select * from ranked_group where rnk=1 order by avg_work_life_balance_score desc;
+
+with max_stress as (select * from db5.workpatterns_clean3 where stress_level= (select max(stress_level) from db5.workpatterns_clean3))
+select * from max_stress where productivity_score= (select max(productivity_score) from max_stress);
+
+with min_stress as (select * from db5.workpatterns_clean3 where stress_level= (select min(stress_level) from db5.workpatterns_clean3))
+select * from min_stress where productivity_score= (select max(productivity_score) from min_stress);
+
+with min_stress as (select * from db5.workpatterns_clean3 where stress_level= (select min(stress_level) from db5.workpatterns_clean3))
+select * from min_stress where productivity_score= (select min(productivity_score) from min_stress);
+
+select 
+case
+	when age between 15 and 20 then "15-20"
+    when age between 21 and 25 then "21-25"
+    when age between 26 and 35 then "26-35"
+    when age between 36 and 45 then "36-45"
+    when age between 46 and 55 then "46-55"
+    when age between 56 and 60 then "56-60"
+    else "60+"
+end as age_group, avg(stress_level) as avg_stress_level from db5.workpatterns_clean3 group by age_group order by avg_stress_level desc;
+
+select 
+case
+	when age between 15 and 20 then "15-20"
+    when age between 21 and 25 then "21-25"
+    when age between 26 and 35 then "26-35"
+    when age between 36 and 45 then "36-45"
+    when age between 46 and 55 then "46-55"
+    when age between 56 and 60 then "56-60"
+    else "60+"
+end as age_group, avg(productivity_score) as avg_productivity_score from db5.workpatterns_clean3 group by age_group order by avg_productivity_score desc;
+
+
+
+
+
+
+
+
